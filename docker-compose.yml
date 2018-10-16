@@ -1,0 +1,28 @@
+version: '3'
+
+services:
+    rabbit:
+        image: rabbitmq:latest
+        environment:
+            - RABBITMQ_DEFAULT_USER=user
+            - RABBITMQ_DEFAULT_PASS=pass
+        ports:
+            - "5672:5672"
+
+    worker:
+        image: gcr.io/trends-217607/trends
+        command: celery -A trends worker
+        depends_on:
+            - rabbit
+
+    web:
+        image: gcr.io/trends-217607/trends
+        command: celery -A trends flower --port=80
+        ports:
+            - "80:80"
+        depends_on:
+            - worker
+        environment:
+            - GET_HOSTS_FROM=dns
+        labels:
+            kompose.service.type: LoadBalancer
