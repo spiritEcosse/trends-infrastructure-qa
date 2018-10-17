@@ -93,7 +93,7 @@ steps:
         # Change to the trends-infrastructure-production directory.
         cd trends-infrastructure-production
 
-        sed -i "s%gcr.io/${PROJECT_ID}/trends.*%$${CONTAINER_IMAGE}%g" docker-compose.yaml
+        sed -i "s%gcr.io/${PROJECT_ID}/trends.*%${CONTAINER_IMAGE}%g" docker-compose.yaml
 
         # commit the local changes, then issue a pull request.
         git checkout -b update-deployment-${BUILD_ID}
@@ -105,7 +105,7 @@ steps:
 
         This commit updates the trends deployment container image to:
 
-            $${CONTAINER_IMAGE}
+            ${CONTAINER_IMAGE}
 
         Build ID: ${BUILD_ID}
         EOF
@@ -118,7 +118,7 @@ steps:
 
         This commit updates the trends deployment container image to:
 
-            $${CONTAINER_IMAGE}
+            ${CONTAINER_IMAGE}
 
         Build ID: ${BUILD_ID}
         EOF
