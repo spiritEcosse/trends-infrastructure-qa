@@ -78,6 +78,8 @@ steps:
         CONTAINER_IMAGE=$(python -c "import yaml
           print(yaml.load(open('docker-compose.yaml'))['services']['web']['image'])")
 
+        echo $${CONTAINER_IMAGE}
+
         ACTIVE_ACCOUNT=$(gcloud auth list --filter=status:ACTIVE --format="value(account)")
 
         hub config --global credential.https://github.com.helper /usr/local/bin/hub-credential-helper
@@ -93,7 +95,7 @@ steps:
         # Change to the trends-infrastructure-production directory.
         cd trends-infrastructure-production
 
-        sed -i "s%gcr.io/${PROJECT_ID}/trends.*%${CONTAINER_IMAGE}%g" docker-compose.yaml
+        sed -i "s%gcr.io/${PROJECT_ID}/trends.*%$${CONTAINER_IMAGE}%g" docker-compose.yaml
 
         # commit the local changes, then issue a pull request.
         git checkout -b update-deployment-${BUILD_ID}
@@ -105,7 +107,7 @@ steps:
 
         This commit updates the trends deployment container image to:
 
-            ${CONTAINER_IMAGE}
+            $${CONTAINER_IMAGE}
 
         Build ID: ${BUILD_ID}
         EOF
@@ -118,7 +120,7 @@ steps:
 
         This commit updates the trends deployment container image to:
 
-            ${CONTAINER_IMAGE}
+            $${CONTAINER_IMAGE}
 
         Build ID: ${BUILD_ID}
         EOF
