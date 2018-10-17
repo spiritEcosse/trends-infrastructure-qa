@@ -64,8 +64,8 @@ steps:
       - name: 'kube'
         path: /kube
 
-  # Create a pull request on the ${_GITHUB_USERNAME}/helloworld-infrastructure-production repo
-  # to update the helloworld deployment configuration.
+  # Create a pull request on the ${_GITHUB_USERNAME}/trends-infrastructure-production repo
+  # to update the trends deployment configuration.
   - name: 'gcr.io/hightowerlabs/hub'
     env:
       - 'HUB_CONFIG=/config/hub'
@@ -74,10 +74,9 @@ steps:
     args:
       - '-c'
       - |
-        # Extract the container image from the qa helloworld deployment configuration file.
-        CONTAINER_IMAGE=$(kubectl apply --dry-run \
-           -f kubernetes/deployments/helloworld.yaml \
-           -o jsonpath='{.spec.template.spec.containers[?(@.name == "helloworld")].image}')
+        # Extract the container image from the qa trends deployment configuration file.
+        CONTAINER_IMAGE=$(python -c "import yaml
+          print(yaml.load(open('docker-compose.yaml'))['services']['web']['image'])")
 
         ACTIVE_ACCOUNT=$(gcloud auth list --filter=status:ACTIVE --format="value(account)")
 
@@ -87,38 +86,24 @@ steps:
         hub config --global user.name "Google Container Builder"
 
 
-        # Clone the ${_GITHUB_USERNAME}/helloworld-infrastructure-production repo
-        # and patch the helloworld deployment container image.
-        hub clone "https://github.com/${_GITHUB_USERNAME}/helloworld-infrastructure-production.git"
+        # Clone the ${_GITHUB_USERNAME}/trends-infrastructure-production repo
+        # and patch the trends deployment container image.
+        hub clone "https://github.com/${_GITHUB_USERNAME}/trends-infrastructure-production.git"
 
-        cat <<EOF > patch.yaml
-        spec:
-          template:
-            spec:
-              containers:
-                - name: helloworld
-                  image: $${CONTAINER_IMAGE}
-        EOF
+        # Change to the trends-infrastructure-production directory.
+        cd trends-infrastructure-production
 
-        kubectl patch --local -o yaml \
-          -f helloworld-infrastructure-production/kubernetes/deployments/helloworld.yaml \
-          -p "$(cat patch.yaml)" \
-          > helloworld.yaml
+        sed -i "s%gcr.io/${PROJECT_ID}/trends.*%$${CONTAINER_IMAGE}%g" docker-compose.yaml
 
-        mv helloworld.yaml helloworld-infrastructure-production/kubernetes/deployments/helloworld.yaml
-
-        # Change to the helloworld-infrastructure-production directory
         # commit the local changes, then issue a pull request.
-        cd helloworld-infrastructure-production
-
         git checkout -b update-deployment-${BUILD_ID}
 
-        hub add kubernetes/deployments/helloworld.yaml
- 
-        hub commit -F- <<EOF
-        Update the helloworld deployment
+        hub add docker-compose.yaml
 
-        This commit updates the helloworld deployment container image to:
+        hub commit -F- <<EOF
+        Update the trends deployment
+
+        This commit updates the trends deployment container image to:
 
             $${CONTAINER_IMAGE}
 
@@ -127,11 +112,11 @@ steps:
 
         hub push origin update-deployment-${BUILD_ID}
 
-        # Create a pull request to the ${_GITHUB_USERNAME}/helloworld-infrastructure-production repo.
+        # Create a pull request to the ${_GITHUB_USERNAME}/trends-infrastructure-production repo.
         hub pull-request -F- <<EOF
-        Update the helloworld deployment
+        Update the trends deployment
 
-        This commit updates the helloworld deployment container image to:
+        This commit updates the trends deployment container image to:
 
             $${CONTAINER_IMAGE}
 
