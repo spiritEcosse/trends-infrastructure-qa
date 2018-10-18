@@ -55,7 +55,8 @@ steps:
     args:
       - '-c'
       - |
-        pip install -U pip setuptools pyyaml
+        pip install --upgrade setuptools
+        pip install pyyaml
         curl -L https://github.com/kubernetes/kompose/releases/download/v1.1.0/kompose-linux-amd64 -o kompose
         chmod +x kompose
         mv ./kompose /usr/local/bin/kompose
