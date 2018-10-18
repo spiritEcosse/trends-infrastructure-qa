@@ -78,6 +78,7 @@ steps:
         pip install --upgrade setuptools
         python -m easy_install pyyaml
         CONTAINER_IMAGE=$(python -c "import yaml; print(yaml.load(open('docker-compose.yaml'))['services']['web']['image'])")
+        echo $${CONTAINER_IMAGE}
 
         ACTIVE_ACCOUNT=$(gcloud auth list --filter=status:ACTIVE --format="value(account)")
 
