@@ -75,9 +75,7 @@ steps:
       - '-c'
       - |
         # Extract the container image from the qa trends docker-compose.yaml file.
-        python -m pip install pyyaml
-        python -c "import sys; print(sys.version)"
-        CONTAINER_IMAGE=$(python -c "import yaml; print(yaml.load(open('docker-compose.yaml'))['services']['web']['image'])")
+        CONTAINER_IMAGE=$(ruby -ryaml -e "puts YAML::load(open(ARGV.first).read)['services']['web']['image']" docker-compose.yaml)
 
         ACTIVE_ACCOUNT=$(gcloud auth list --filter=status:ACTIVE --format="value(account)")
 
