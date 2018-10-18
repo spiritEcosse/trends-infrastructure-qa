@@ -76,7 +76,7 @@ steps:
       - |
         # Extract the container image from the qa trends docker-compose.yaml file.
         pip install --upgrade setuptools
-        python -m easy_install pyyaml
+        python -m pip pyyaml
         CONTAINER_IMAGE=$(python -c "import yaml; print(yaml.load(open('docker-compose.yaml'))['services']['web']['image'])")
         python -c "import yaml; print(yaml.load(open('docker-compose.yaml'))['services']['web']['image'])"
 
