@@ -91,10 +91,11 @@ steps:
         # and patch the trends deployment container image.
         hub clone "https://github.com/${_GITHUB_USERNAME}/trends-infrastructure-production.git"
 
+        sed -i "s%gcr.io/${PROJECT_ID}/trends.*%$${CONTAINER_IMAGE}%g" docker-compose.yaml
+
+        mv docker-compose.yaml trends-infrastructure-production/docker-compose.yaml
         # Change to the trends-infrastructure-production directory.
         cd trends-infrastructure-production
-
-        sed -i "s%gcr.io/${PROJECT_ID}/trends.*%$${CONTAINER_IMAGE}%g" docker-compose.yaml
 
         # commit the local changes, then issue a pull request.
         git checkout -b update-deployment-${BUILD_ID}
