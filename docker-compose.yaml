@@ -1,28 +1,92 @@
-version: '3'
+version: '2'
 
 services:
     rabbit:
-        image: rabbitmq:latest
+        image: rabbitmq:management
         environment:
             - RABBITMQ_DEFAULT_USER=user
             - RABBITMQ_DEFAULT_PASS=pass
         ports:
             - "5672:5672"
+            - "15672:15672"
+        labels:
+            kompose.service.type: LoadBalancer
 
-    worker:
-        image: gcr.io/trends-217607/trends:1.0.5
-        command: celery -A trends worker
+
+    worker_write_to_google:
+        image: gcr.io/trends-217607/trends:1.0.6
+#        build: .
+        command: celery -A trends worker -l info -P eventlet -c 10 -Q write_to_google -n write_to_google@%h
+        volumes:
+            - ~/.ipython:/root/.ipython
+        environment:
+            - SHUTTER_TOKEN=${SHUTTER_TOKEN}
+        depends_on:
+            - rabbit
+
+    worker_research_task:
+        image: gcr.io/trends-217607/trends:1.0.6
+#        build: .
+        command: celery -A trends worker -l info -P eventlet -c 5 -Q research_task -n research_task@%h
+        volumes:
+            - ~/.ipython:/root/.ipython
+        environment:
+            - SHUTTER_TOKEN=${SHUTTER_TOKEN}
+        depends_on:
+            - rabbit
+
+    worker_combinations:
+        image: gcr.io/trends-217607/trends:1.0.6
+#        build: .
+        command: celery -A trends worker -l info -Q combinations -n combinations@%h
+        volumes:
+            - ~/.ipython:/root/.ipython
+        environment:
+            - SHUTTER_TOKEN=${SHUTTER_TOKEN}
+        depends_on:
+            - rabbit
+
+    worker_shutterstock_search:
+        image: gcr.io/trends-217607/trends:1.0.6
+#        build: .
+        command: celery -A trends worker -l info -P eventlet -c 10 -Q shutterstock_search -n shutterstock_search@%h
+        volumes:
+            - ~/.ipython:/root/.ipython
+        environment:
+            - SHUTTER_TOKEN=${SHUTTER_TOKEN}
         depends_on:
             - rabbit
 
     web:
-        image: gcr.io/trends-217607/trends:1.0.5
+        image: gcr.io/trends-217607/trends:1.0.6
+#        build: .
+        volumes:
+            - ~/.ipython:/root/.ipython
         command: celery -A trends flower --port=80
         ports:
             - "80:80"
         depends_on:
-            - worker
+            - worker_combinations
+            - worker_shutterstock_search
+            - worker_research_task
+            - worker_write_to_google
         environment:
-            - GET_HOSTS_FROM=dns
+            - SHUTTER_TOKEN=${SHUTTER_TOKEN}
         labels:
             kompose.service.type: LoadBalancer
+
+    phantomjs:
+        image: nkovacs/selenium-standalone-phantomjs
+        ports:
+            - "4444:4444"
+
+    redis:
+        image: redis:latest
+        container_name: redis
+        ports:
+          - "6379:6379"
+        volumes:
+          - redis_db:/data
+
+volumes:
+  redis_db:
